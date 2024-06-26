@@ -56,7 +56,7 @@ std::vector<int> Circle::GraphQuery(Item<float> &query, std::vector<int> beginVe
     std::priority_queue<std::pair<float, Node*>, std::vector<std::pair<float, Node*>>, cmpGreater> candidate; // 小顶堆
     std::priority_queue<std::pair<float, Node*>, std::vector<std::pair<float, Node*>>, cmpLess> topK; // 大顶堆
 
-    bool *visited = new bool[nodes.size()];
+    bool *visited = new bool[nodes.size() + 100];
     // 初始化候选者
     if (beginVector.empty()) {
         candidate.push(std::make_pair(query - *nodes[0]->v, nodes[0]));
@@ -185,12 +185,37 @@ void Circle::solveEdge() {
         circles.push_back(circle);
     }
     std::cout << "circle size: " << circles.size() << std::endl;
+    // 每个环内部的邻居
     #pragma omp parallel for num_threads(THREAD_CONFIG)
     for (auto & circle : circles) {
         for (auto & node : circle) {
             std::vector<std::pair<float, Node *>> distance;
             for (auto & item : circle) {
                 if (item == node) continue;
+                distance.push_back(std::make_pair(*item->v - *node->v, item));
+            }
+            std::sort(distance.begin(), distance.end(), cmpLess());
+            for (int i = 0; i < D*2/LAYER_P; i++) {
+                node->edge.push_back(distance[i].second);
+            }
+        }
+    }
+    // 向外扩展一层
+    #pragma omp parallel for num_threads(THREAD_CONFIG)
+    for (int circleId = 0; circleId < circles.size(); circleId++) {
+        int nextCircleId = (circleId + 1) % circles.size();
+        int preCircleId = (circleId - 1 + circles.size()) % circles.size();
+        for (auto & node : circles[circleId]) {
+            std::vector<std::pair<float, Node *>> distance;
+            for (auto & item : circles[nextCircleId]) {
+                distance.push_back(std::make_pair(*item->v - *node->v, item));
+            }
+            std::sort(distance.begin(), distance.end(), cmpLess());
+            for (int i = 0; i < D*2/LAYER_P; i++) {
+                node->edge.push_back(distance[i].second);
+            }
+            distance.clear();
+            for (auto & item : circles[preCircleId]) {
                 distance.push_back(std::make_pair(*item->v - *node->v, item));
             }
             std::sort(distance.begin(), distance.end(), cmpLess());
