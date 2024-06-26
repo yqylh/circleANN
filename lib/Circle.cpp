@@ -6,23 +6,26 @@
 #include "../res/kmeans/kmeans.cpp"
 using namespace std::literals;
 
-struct Node{
+struct Node {
     int id;
     Item<FILETYPE> *v;
     std::vector<Node *> edge;
     Node() {}
     Node(int id, Item<FILETYPE> *v) : id(id), v(v) {}
 };
+
 struct cmpGreater {
-    bool operator()(std::pair<double, Node *> &a, std::pair<double, Node *> &b) {
+    bool operator()(std::pair<float, Node *> &a, std::pair<float, Node *> &b) {
         return a.first > b.first;
     }
 };
+
 struct cmpLess {
-    bool operator()(std::pair<double, Node *> &a, std::pair<double, Node *> &b) {
+    bool operator()(std::pair<float, Node *> &a, std::pair<float, Node *> &b) {
         return a.first < b.first;
     }
 };
+
 struct Circle {
     // value
     DataSet<FILETYPE> *dataSet;
@@ -30,6 +33,7 @@ struct Circle {
     std::vector<Node *> nodes;
     // func
     std::vector<int> GraphQuery(Item<float> &query, std::vector<int> beginVector = std::vector<int>());
+    void solveEdge();
     void queryAnn();
     // 构造和析构
     void setNodes() {
@@ -45,15 +49,14 @@ struct Circle {
     }
 };
 
-
 /**
  * @brief 从一个图中查询 ANN
 */
 std::vector<int> Circle::GraphQuery(Item<float> &query, std::vector<int> beginVector) {
-    std::priority_queue<std::pair<double, Node*>, std::vector<std::pair<double, Node*>>, cmpGreater> candidate; // 小顶堆
-    std::priority_queue<std::pair<double, Node*>, std::vector<std::pair<double, Node*>>, cmpLess> topK; // 大顶堆
+    std::priority_queue<std::pair<float, Node*>, std::vector<std::pair<float, Node*>>, cmpGreater> candidate; // 小顶堆
+    std::priority_queue<std::pair<float, Node*>, std::vector<std::pair<float, Node*>>, cmpLess> topK; // 大顶堆
 
-    std::unordered_set<int> visited;
+    bool *visited = new bool[nodes.size()];
     // 初始化候选者
     if (beginVector.empty()) {
         candidate.push(std::make_pair(query - *nodes[0]->v, nodes[0]));
@@ -77,11 +80,11 @@ std::vector<int> Circle::GraphQuery(Item<float> &query, std::vector<int> beginVe
         // 遍历所有的邻居
         for (auto & toId : item.second->edge) {
             // 如果没有插入过,则加入到候选者中
-            if (visited.find(toId->id) == visited.end()) {
-                double distance = query - *toId->v;
+            if (visited[toId->id] == false) {
+                float distance = query - *toId->v;
                 if (distance > topK.top().first) continue;
                 candidate.push(std::make_pair(distance, toId));
-                visited.insert(toId->id);
+                visited[toId->id] = true;
             }
         }
     }
@@ -110,7 +113,7 @@ void Circle::queryAnn() {
         auto start = std::chrono::steady_clock::now();
         std::vector<int> ans = GraphQuery(dataSet->queryData[i]);
         auto end = std::chrono::steady_clock::now();
-        double recall = 0;
+        float recall = 0;
         for (auto & item : ans) {
             for (auto & ansItem : dataSet->ansData[i].vectors) {
                 if (item == ansItem) {
@@ -125,5 +128,77 @@ void Circle::queryAnn() {
         insertQueryItemMtx.unlock();
     }
     solveQueryAns(queryAns, dataSet->queryData.size());
+}
+
+void Circle::solveEdge() {
+    // 按照凸包分成多个圈
+    std::vector<std::vector<Node*>> circles;
+    bool *visited = new bool[nodes.size() + 10];
+    for (int i = 0; i <= nodes.size(); i++) visited[i] = false;
+    int insertCount = 0;
+    std::vector< std::priority_queue<std::pair<float, Node*>, std::vector<std::pair<float, Node*>>, cmpLess> > min(D);
+    std::vector< std::priority_queue<std::pair<float, Node*>, std::vector<std::pair<float, Node*>>, cmpGreater> > max(D);
+    for (auto & node : nodes) {
+        for (int i = 0; i < D; i++) {
+            min[i].push(std::make_pair(node->v->vectors[i], node));
+            max[i].push(std::make_pair(node->v->vectors[i], node));
+        }
+    }
+    while (insertCount < nodes.size()) {
+        std::vector<Node *> circle;
+        if (nodes.size() - insertCount < D * 2) {
+            for (int i = 0; i < nodes.size(); i++) {
+                if (visited[nodes[i]->id] == false) {
+                    circle.push_back(nodes[i]);
+                    insertCount++;
+                }
+            }
+            circles.push_back(circle);
+            break;
+        }
+        for (int i = 0; i < D; i++) {
+            bool insertMin = false;
+            while (insertMin == false) {
+                if (min[i].empty()) break;
+                auto minItem = min[i].top();
+                if (visited[minItem.second->id] == false) {
+                    circle.push_back(minItem.second);
+                    visited[minItem.second->id] = true;
+                    insertCount++;
+                    insertMin = true;
+                }
+                min[i].pop();
+            }
+            bool insertMax = false;
+            while (insertMax == false) {
+                if (max[i].empty()) break;
+                auto maxItem = max[i].top();
+                if (visited[maxItem.second->id] == false) {
+                    circle.push_back(maxItem.second);
+                    visited[maxItem.second->id] = true;
+                    insertCount++;
+                    insertMax = true;
+                }
+                max[i].pop();
+            }
+        }
+        circles.push_back(circle);
+    }
+    std::cout << "circle size: " << circles.size() << std::endl;
+    #pragma omp parallel for num_threads(THREAD_CONFIG)
+    for (auto & circle : circles) {
+        for (auto & node : circle) {
+            std::vector<std::pair<float, Node *>> distance;
+            for (auto & item : circle) {
+                if (item == node) continue;
+                distance.push_back(std::make_pair(*item->v - *node->v, item));
+            }
+            std::sort(distance.begin(), distance.end(), cmpLess());
+            for (int i = 0; i < D*2/LAYER_P; i++) {
+                node->edge.push_back(distance[i].second);
+            }
+        }
+    }
+    delete[] visited;
 }
 #endif

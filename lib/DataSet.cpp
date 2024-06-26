@@ -23,8 +23,8 @@ public:
     T &operator[](int i) { return vectors[i]; }
 
     // 重载运算符，用于计算两个向量的距离(仅计算欧式距离的平方)
-    double operator-(Item<T> &item) {
-        double sum = 0;
+    float operator-(Item<T> &item) {
+        float sum = 0;
         // openmp simd
         #pragma omp simd
         for (int i = 0; i < vectors.size(); i++) {
@@ -32,16 +32,16 @@ public:
         }
         return sum;
     }
-    double operator*(Item<T> &item) {
-        double sum = 0;
+    float operator*(Item<T> &item) {
+        float sum = 0;
         #pragma omp simd
         for (int i = 0; i < vectors.size(); i++) {
             sum += vectors[i] * item.vectors[i];
         }
         return sum;
     }
-    double length() {
-        double sum = 0;
+    float length() {
+        float sum = 0;
         #pragma omp simd
         for (int i = 0; i < vectors.size(); i++) {
             sum += vectors[i] * vectors[i];

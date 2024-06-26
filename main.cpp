@@ -92,6 +92,7 @@ int main(int argc, char *argv[]) {
     if (HDF5) ds = static_cast<DataSet<FILETYPE> *>(new HDF5DataSet<FILETYPE>(baseFileName));
     else ds = static_cast<DataSet<FILETYPE> *>(new SIFTDataSet<FILETYPE>(baseFileName, queryFileName, ansFileName));
     Circle circle(ds, K);
+    circle.solveEdge();
     circle.queryAnn();
     delete ds;
     return 0;

@@ -16,6 +16,7 @@
 #include <unordered_set>
 #include <map>
 #include <unordered_map>
+#include <bitset>
 
 
 // INPUT 参数
