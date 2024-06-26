@@ -11,6 +11,11 @@
 #include <thread>
 #include <chrono>
 #include <mutex>
+#include <algorithm>
+#include <queue>
+#include <unordered_set>
+#include <map>
+#include <unordered_map>
 
 #define uchar unsigned char
 // 查询配置
@@ -107,5 +112,38 @@ std::mutex *mtx;
     std::string baseFileName = "./dataset/hdf5/glove-100-angular.hdf5";
     bool HDF5 = true;
 #endif
+template<typename T>
+void bugs_output(T x) {
+    std::cout << x << " ";
+}
+template<typename... Args>
+void bugs(Args... args) {
+    (..., bugs_output(args));
+    std::cout << std::endl;
+}
+std::ofstream tout("time.txt", std::ios::app);
 
+class Timer {
+public:
+    template<typename Func, typename... Args>
+    static auto measure(const std::string& description, Func func, Args&&... args) {
+        auto start = std::chrono::high_resolution_clock::now();
+        
+        if constexpr (std::is_same_v<std::invoke_result_t<Func, Args...>, void>) {
+            // If the function returns void
+            func(std::forward<Args>(args)...);
+            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed = end - start;
+            tout <<" "<< description << "\t - Elapsed time: \t" << elapsed.count() * 1000 << "\tmirco seconds.\n";
+        } else {
+            // If the function returns a value
+            auto result = func(std::forward<Args>(args)...);
+            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed = end - start;
+            tout <<" "<< description << "\t - Elapsed time: \t" << elapsed.count() * 1000 << "\tmicro seconds.\n";
+            return result;
+        }
+        std::cout << description << " - Done." << std::endl;
+    }
+};
 #endif
