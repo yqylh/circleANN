@@ -17,7 +17,13 @@
 #include <map>
 #include <unordered_map>
 
-#define uchar unsigned char
+
+// INPUT 参数
+double LAYER_P;
+int LAYER_ADD;
+int LAYER_DEC;
+int LAYER_T;
+
 // 查询配置
 int CREATEGRAPH = 0;
 std::mutex *mtx;
