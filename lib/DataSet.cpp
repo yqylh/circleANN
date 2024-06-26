@@ -13,13 +13,6 @@
 #define __DATASET_H__
 #include "Config.cpp"
 #include "HDF5read.cpp"
-/**
- * Item
- * 用于记录每个向量的信息
- * vector:向量
- * edge : 该向量的KNN/NSW图
- * 提供重载的运算符 : [] -(欧氏距离的平方)
-*/
 template <typename T>
 class Item {
 public: 
@@ -27,10 +20,7 @@ public:
     Item(int lenth) : vectors(lenth){}
     ~Item(){}
     std::vector<T> vectors; // 向量
-    std::vector<int> edge; // 边
     T &operator[](int i) { return vectors[i]; }
-    // cluster
-    int clusterId; // 聚类的id
 
     // 重载运算符，用于计算两个向量的距离(仅计算欧式距离的平方)
     double operator-(Item<T> &item) {
@@ -44,6 +34,7 @@ public:
     }
     double operator*(Item<T> &item) {
         double sum = 0;
+        #pragma omp simd
         for (int i = 0; i < vectors.size(); i++) {
             sum += vectors[i] * item.vectors[i];
         }
@@ -51,15 +42,14 @@ public:
     }
     double length() {
         double sum = 0;
+        #pragma omp simd
         for (int i = 0; i < vectors.size(); i++) {
             sum += vectors[i] * vectors[i];
         }
         return sqrt(sum);
     }
     inline void print() {
-        for (auto & item : vectors) {
-            std::cout << item << " ";
-        }
+        for (auto & item : vectors) std::cout << item << " ";
         std::cout << std::endl;
     }
 };

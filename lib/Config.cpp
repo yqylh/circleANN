@@ -24,11 +24,6 @@ int LAYER_ADD;
 int LAYER_DEC;
 int LAYER_T;
 
-// 查询配置
-int CREATEGRAPH = 0;
-std::mutex *mtx;
-#define THREAD_CONFIG 1
-
 // 选择数据集
 #define SIFT1M 1
 #define FashionMNIST 2

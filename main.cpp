@@ -1,4 +1,4 @@
-#include "lib/Query.cpp"
+#include "lib/Circle.cpp"
 
 /**
 我在构图的时候，可以把图分成 N/D 个多层凸包（维护每个维度的 list，结合凸包的特点），然后我画出来了一个多层高维球体。这个球体的每一层一定是子层的凸包。这样我们就对高维空间的点进行了划分
@@ -88,10 +88,11 @@ void parseArgs(int argc, char *argv[]) {
 
 int main(int argc, char *argv[]) {
     parseArgs(argc, argv);
-    // DataSet<FILETYPE> *ds;
-    // if (HDF5) ds = static_cast<DataSet<FILETYPE> *>(new HDF5DataSet<FILETYPE>(baseFileName));
-    // else ds = static_cast<DataSet<FILETYPE> *>(new SIFTDataSet<FILETYPE>(baseFileName, queryFileName, ansFileName));
-    // queryAnn(ds, K);
-    // delete ds;
+    DataSet<FILETYPE> *ds;
+    if (HDF5) ds = static_cast<DataSet<FILETYPE> *>(new HDF5DataSet<FILETYPE>(baseFileName));
+    else ds = static_cast<DataSet<FILETYPE> *>(new SIFTDataSet<FILETYPE>(baseFileName, queryFileName, ansFileName));
+    Circle circle(ds, K);
+    circle.queryAnn();
+    delete ds;
     return 0;
 }
