@@ -19,7 +19,7 @@ void solveQueryAns(std::vector<QUERYANS> &queryAns, int queryNum) {
     }
     avgRecall /= queryAns.size();
     avgTime /= queryAns.size();
-    std::cout << "avgRecall: " << avgRecall * 100 << "% , avgTime:" << avgTime << " us" << std::endl;
+    std::cout << "avgRecall: " << avgRecall * 100 << "% , avgTime:" << avgTime << " us, qps:" << 1000000.0 / avgTime << " \n";
 }
 
 #endif
