@@ -195,7 +195,7 @@ void Circle::solveEdge() {
                 distance.push_back(std::make_pair(*item->v - *node->v, item));
             }
             std::sort(distance.begin(), distance.end(), cmpLess());
-            for (int i = 0; i < D*2/LAYER_P; i++) {
+            for (int i = 0; i < D*2*LAYER_P; i++) {
                 node->edge.push_back(distance[i].second);
             }
         }
@@ -211,7 +211,7 @@ void Circle::solveEdge() {
                 distance.push_back(std::make_pair(*item->v - *node->v, item));
             }
             std::sort(distance.begin(), distance.end(), cmpLess());
-            for (int i = 0; i < D*2/LAYER_P; i++) {
+            for (int i = 0; i < D*2*LAYER_P; i++) {
                 node->edge.push_back(distance[i].second);
             }
             distance.clear();
@@ -219,11 +219,12 @@ void Circle::solveEdge() {
                 distance.push_back(std::make_pair(*item->v - *node->v, item));
             }
             std::sort(distance.begin(), distance.end(), cmpLess());
-            for (int i = 0; i < D*2/LAYER_P; i++) {
+            for (int i = 0; i < D*2*LAYER_P; i++) {
                 node->edge.push_back(distance[i].second);
             }
         }
     }
+    std::cout << nodes[0]->edge.size() << std::endl;
     delete[] visited;
 }
 #endif
