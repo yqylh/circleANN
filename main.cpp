@@ -81,9 +81,9 @@ void parseArgs(int argc, char *argv[]) {
         exit(1);
     }
     LAYER_P = atof(argv[1]);
-    LAYER_ADD = atoi(argv[2]);
-    LAYER_DEC = atoi(argv[3]);
-    LAYER_T = atoi(argv[4]);
+    LAYER_ADD = atof(argv[2]);
+    LAYER_DEC = atof(argv[3]);
+    LAYER_T = atof(argv[4]);
 } 
 
 int main(int argc, char *argv[]) {

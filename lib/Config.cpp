@@ -21,9 +21,9 @@
 
 // INPUT 参数
 double LAYER_P;
-int LAYER_ADD;
-int LAYER_DEC;
-int LAYER_T;
+double LAYER_ADD;
+double LAYER_DEC;
+double LAYER_T;
 
 // 选择数据集
 #define SIFT1M 1

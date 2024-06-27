@@ -201,26 +201,30 @@ void Circle::solveEdge() {
         }
     }
     // 向外扩展一层
+    int circleSize = circles.size();
     #pragma omp parallel for num_threads(THREAD_CONFIG)
     for (int circleId = 0; circleId < circles.size(); circleId++) {
-        int nextCircleId = (circleId + 1) % circles.size();
-        int preCircleId = (circleId - 1 + circles.size()) % circles.size();
-        for (auto & node : circles[circleId]) {
-            std::vector<std::pair<float, Node *>> distance;
-            for (auto & item : circles[nextCircleId]) {
-                distance.push_back(std::make_pair(*item->v - *node->v, item));
-            }
-            std::sort(distance.begin(), distance.end(), cmpLess());
-            for (int i = 0; i < D*2*LAYER_P; i++) {
-                node->edge.push_back(distance[i].second);
-            }
-            distance.clear();
-            for (auto & item : circles[preCircleId]) {
-                distance.push_back(std::make_pair(*item->v - *node->v, item));
-            }
-            std::sort(distance.begin(), distance.end(), cmpLess());
-            for (int i = 0; i < D*2*LAYER_P; i++) {
-                node->edge.push_back(distance[i].second);
+        double cast = 1;
+        for (int add = 1; add <= circleSize / 2; add = add * LAYER_ADD, cast /= LAYER_DEC) {
+            int nextCircleId = (circleId + add) % circles.size();
+            int preCircleId = (circleId - add + circles.size()) % circles.size();
+            for (auto & node : circles[circleId]) {
+                std::vector<std::pair<float, Node *>> distance;
+                for (auto & item : circles[nextCircleId]) {
+                    distance.push_back(std::make_pair(*item->v - *node->v, item));
+                }
+                std::sort(distance.begin(), distance.end(), cmpLess());
+                for (int i = 0; i <= std::max(D*2*LAYER_P*cast, 1.1); i++) {
+                    node->edge.push_back(distance[i].second);
+                }
+                distance.clear();
+                for (auto & item : circles[preCircleId]) {
+                    distance.push_back(std::make_pair(*item->v - *node->v, item));
+                }
+                std::sort(distance.begin(), distance.end(), cmpLess());
+                for (int i = 0; i <= std::max(D*2*LAYER_P*cast, 1.1); i++) {
+                    node->edge.push_back(distance[i].second);
+                }
             }
         }
     }
