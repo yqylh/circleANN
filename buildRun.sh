@@ -5,7 +5,7 @@ if g++ main.cpp -o main -g -std=c++17 -O3 -DDatabaseSelect=1 -DTHREAD_CONFIG=64 
     -I /usr/include/hdf5/serial \
     -I ./res/hdf5/HighFive/include/ \
     -lhdf5_cpp -lhdf5 -L /usr/lib/x86_64-linux-gnu/hdf5/serial ; then
-    gdb ./main 0.05 3 3 3
+    ./main 0.05 2 1.5 3
     if [ -f "main" ]; then
         rm main
     fi
